@@ -22,6 +22,7 @@ use Junges\Kafka\Support\Timer;
 use RdKafka\Conf;
 use RdKafka\KafkaConsumer;
 use RdKafka\Message;
+use RdKafka\Metadata;
 use RdKafka\Producer as KafkaProducer;
 use Throwable;
 
@@ -48,7 +49,7 @@ class Consumer implements CanConsumeMessages
     ];
 
     private Logger $logger;
-    private KafkaConsumer $consumer;
+    private ?KafkaConsumer $consumer=null;
     private KafkaProducer $producer;
     private MessageCounter $messageCounter;
     private Committer $committer;
@@ -84,9 +85,11 @@ class Consumer implements CanConsumeMessages
             $this->listenForSignals();
         }
 
-        $this->consumer = app(KafkaConsumer::class, [
-            'conf' => $this->setConf($this->config->getConsumerOptions()),
-        ]);
+        if (!$this->consumer) {
+            $this->consumer = app(KafkaConsumer::class, [
+                'conf' => $this->setConf($this->config->getConsumerOptions()),
+            ]);
+        }
         $this->producer = app(KafkaProducer::class, [
             'conf' => $this->setConf($this->config->getProducerOptions()),
         ]);
@@ -109,6 +112,17 @@ class Consumer implements CanConsumeMessages
             $callback = $this->whenStopConsuming;
             $callback(...)();
         }
+    }
+
+    public function getMetadata($allTopics = true, $onlyTopic = null, $timeoutMs = 10000): Metadata
+    {
+        if (!$this->consumer) {
+            $this->consumer = app(KafkaConsumer::class, [
+                'conf' => $this->setConf($this->config->getConsumerOptions()),
+            ]);
+        }
+
+        return $this->consumer->getMetadata($allTopics, $onlyTopic, $timeoutMs);
     }
 
     private function shouldRunStopConsumingCallback(): bool
