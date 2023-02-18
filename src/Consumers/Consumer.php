@@ -89,10 +89,11 @@ class Consumer implements CanConsumeMessages
             $this->consumer = app(KafkaConsumer::class, [
                 'conf' => $this->setConf($this->config->getConsumerOptions()),
             ]);
+
+            $this->producer = app(KafkaProducer::class, [
+                'conf' => $this->setConf($this->config->getProducerOptions()),
+            ]);
         }
-        $this->producer = app(KafkaProducer::class, [
-            'conf' => $this->setConf($this->config->getProducerOptions()),
-        ]);
 
         $this->committer = $this->committerFactory->make($this->consumer, $this->config);
 
@@ -120,9 +121,13 @@ class Consumer implements CanConsumeMessages
             $this->consumer = app(KafkaConsumer::class, [
                 'conf' => $this->setConf($this->config->getConsumerOptions()),
             ]);
+
+            $this->producer = app(KafkaProducer::class, [
+                'conf' => $this->setConf($this->config->getProducerOptions()),
+            ]);
         }
 
-        return $this->consumer->getMetadata($allTopics, $onlyTopic, $timeoutMs);
+        return $this->producer->getMetadata($allTopics, $onlyTopic, $timeoutMs);
     }
 
     private function shouldRunStopConsumingCallback(): bool
